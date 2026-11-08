@@ -80,7 +80,5 @@ streamlit run app.py
 ```
 
 ## Live Streamlit App Link
-[Paste your deployed Streamlit Community Cloud URL here.]
+https://mlassignment-bb8qxidzrbbunbn6ezyilh.streamlit.app/
 
-## BITS Virtual Lab Screenshot
-[Insert your own screenshot of assignment execution on BITS Virtual Lab.]
