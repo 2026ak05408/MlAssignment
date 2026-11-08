@@ -1,3 +1,4 @@
+
 from pathlib import Path
 import joblib
 import pandas as pd
@@ -9,8 +10,8 @@ from sklearn.metrics import (
 )
 
 ROOT = Path(__file__).resolve().parent
-MODEL_DIR = ROOT / "models"
 
+# Model files are stored in the same directory as this Python file
 MODEL_FILES = {
     "Logistic Regression": "logistic_regression.joblib",
     "Decision Tree": "decision_tree.joblib",
@@ -19,8 +20,14 @@ MODEL_FILES = {
     "Support Vector Machine": "support_vector_machine.joblib",
 }
 
-st.set_page_config(page_title="Classifier Evaluation Dashboard", page_icon="📊", layout="wide")
+st.set_page_config(
+    page_title="Classifier Evaluation Dashboard",
+    page_icon="📊",
+    layout="wide"
+)
+
 st.title("Machine Learning Classifier Evaluation")
+
 st.write(
     "Upload the held-out test CSV containing the 30 input features and the "
     "`target` column. The saved models are loaded for prediction; the app "
@@ -34,6 +41,7 @@ if uploaded is None:
     st.stop()
 
 data = pd.read_csv(uploaded)
+
 if "target" not in data.columns:
     st.error("The uploaded CSV must contain a `target` column.")
     st.stop()
@@ -41,13 +49,20 @@ if "target" not in data.columns:
 X_test = data.drop(columns=["target"])
 y_test = data["target"]
 
-missing_models = [f for f in MODEL_FILES.values() if not (MODEL_DIR / f).exists()]
+# Check whether all model files exist in the current directory
+missing_models = [
+    f for f in MODEL_FILES.values()
+    if not (ROOT / f).exists()
+]
+
 if missing_models:
-    st.error("Saved model files are missing. Run `python train.py` before starting the app.")
+    st.error(f"Saved model files are missing: {missing_models}")
     st.stop()
 
 choice = st.selectbox("Choose a classifier", list(MODEL_FILES.keys()))
-model = joblib.load(MODEL_DIR / MODEL_FILES[choice])
+
+# Load selected model directly from the current directory
+model = joblib.load(ROOT / MODEL_FILES[choice])
 
 try:
     predictions = model.predict(X_test)
@@ -63,22 +78,41 @@ try:
     }
 
     st.subheader(f"Results: {choice}")
+
     cols = st.columns(3)
+
     for i, (name, value) in enumerate(metrics.items()):
         cols[i % 3].metric(name, f"{value:.4f}")
 
     st.subheader("Confusion Matrix")
+
     cm = confusion_matrix(y_test, predictions)
+
     st.dataframe(
-        pd.DataFrame(cm, index=["Actual 0", "Actual 1"],
-                     columns=["Predicted 0", "Predicted 1"]),
+        pd.DataFrame(
+            cm,
+            index=["Actual 0", "Actual 1"],
+            columns=["Predicted 0", "Predicted 1"]
+        ),
         use_container_width=True
     )
 
     st.subheader("Classification Report")
-    report = classification_report(y_test, predictions, output_dict=True, zero_division=0)
-    st.dataframe(pd.DataFrame(report).transpose().round(4), use_container_width=True)
+
+    report = classification_report(
+        y_test,
+        predictions,
+        output_dict=True,
+        zero_division=0
+    )
+
+    st.dataframe(
+        pd.DataFrame(report).transpose().round(4),
+        use_container_width=True
+    )
 
 except Exception as exc:
     st.error(f"Could not evaluate this file: {exc}")
-    st.write("Check that the CSV has the same feature columns as the training dataset.")
+    st.write(
+        "Check that the CSV has the same feature columns as the training dataset."
+    )
